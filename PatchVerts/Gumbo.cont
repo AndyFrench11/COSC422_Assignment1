@@ -1,0 +1,69 @@
+#version 400
+
+layout(vertices = 16) out;
+
+uniform vec4 cameraPosition;
+uniform int explosionBool;
+uniform float explosionTime;
+
+void main()
+{
+    float zavg = abs(distance(gl_in[gl_InvocationID].gl_Position.z, cameraPosition.z));
+    float level = (((zavg + 100)*18)/100) + 2;
+    
+    level = 50 - level;
+    
+    gl_out[gl_InvocationID].gl_Position
+      = gl_in[gl_InvocationID].gl_Position;
+    gl_TessLevelOuter[0] = level;
+    gl_TessLevelOuter[1] = level;
+    gl_TessLevelOuter[2] = level;
+    gl_TessLevelOuter[3] = level;
+    gl_TessLevelInner[0] = level;
+    gl_TessLevelInner[1] = level;
+    
+    if(explosionBool == 1)
+    {
+        //For projectile motion
+        vec4 vector_total = vec4(0,0,0,0);
+        for(int i = 0; i < 16; i++) {
+            vector_total += gl_in[i].gl_Position;
+        }
+        vec4 d = vector_total / 16;
+        float v = 10.0;
+        
+        vec4 projVector = vec4(d.x, 0, d.z, 0);
+        
+        vec4 normalisedProjVector = normalize(projVector);
+        vec4 normalisedD = normalize(d);
+        float angle = acos(dot(normalisedProjVector, normalisedD));
+        
+        float gravity = 9.81;
+        float vy = v*sin(angle);
+        float vh = v*cos(angle);
+        
+        vec4 inputPosition =  gl_in[gl_InvocationID].gl_Position;
+        
+        //Calculate value of t where it will be at y = 0
+        float a = (-1)*(0.5)*(gravity);
+        float b = vy;
+        float c = inputPosition.y; 
+        float t1 = (-b + sqrt(pow(b, 2) - 4*a*c))/(2*a);
+        float t2 = (-b - sqrt(pow(b, 2) - 4*a*c))/(2*a);
+        float maxTime = max(t1, t2);
+        
+        float elapsedTime = explosionTime;
+        
+        if(explosionTime >= maxTime)
+        {
+            elapsedTime = maxTime;
+        }
+        
+        inputPosition.y = inputPosition.y + vy*elapsedTime - (0.5)*(gravity)*(pow(elapsedTime, 2));
+        inputPosition.xz = inputPosition.xz + (d.xz)*vh*elapsedTime;
+        gl_out[gl_InvocationID].gl_Position = inputPosition;
+    }
+    
+
+    
+}

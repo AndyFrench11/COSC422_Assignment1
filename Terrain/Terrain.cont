@@ -1,0 +1,23 @@
+#version 400
+
+layout(vertices = 4) out;
+
+uniform vec4 cameraPosition;
+
+void main()
+{
+    float zavg = abs(distance(gl_in[gl_InvocationID].gl_Position.z, cameraPosition.z));
+    float level = (((zavg + 100)*18)/100) + 2;
+    
+    level = 50 - level;
+    
+    gl_out[gl_InvocationID].gl_Position
+      = gl_in[gl_InvocationID].gl_Position;
+    gl_TessLevelOuter[0] = level;
+    gl_TessLevelOuter[1] = level;
+    gl_TessLevelOuter[2] = level;
+    gl_TessLevelOuter[3] = level;
+    gl_TessLevelInner[0] = level;
+    gl_TessLevelInner[1] = level;
+    
+}
